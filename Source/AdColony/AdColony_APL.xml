@@ -1,0 +1,343 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--GearVR plugin additions-->
+<root xmlns:android="http://schemas.android.com/apk/res/android">
+	<!-- init section is always evaluated once per architecture -->
+	<trace enable="true"/>
+	<init>
+		<log text="AdColony init"/>		
+	</init>
+
+  <androidManifestUpdates>
+    <addElements tag="application">
+      <activity android:name="com.adcolony.sdk.AdColonyInterstitialActivity"
+                android:configChanges="keyboardHidden|orientation|screenSize"
+                android:hardwareAccelerated="true"/>
+
+      <activity android:name="com.adcolony.sdk.AdColonyAdViewActivity"
+                android:configChanges="keyboardHidden|orientation|screenSize"
+                android:hardwareAccelerated="true"/>
+    </addElements>
+	
+	<!-- Read App ID from plugin project settings and add to the manifest -->  
+    <setStringFromProperty result="AppId" ini="Engine" section="/Script/AdColony.AdColonySettings" property="AppId" default=""/>
+    <setElement result="AppIdMetadata" value="meta-data"/>
+    <addAttribute tag="$AppIdMetadata" name="android:name" value="com.epicgames.ue4.AdColony.AppId"/>
+    <addAttribute tag="$AppIdMetadata" name="android:value" value="$S(AppId)"/>
+    <addElement tag="application" name="AppIdMetadata"/>
+
+    <!-- Read App ID from plugin project settings and add to the manifest -->
+    <setStringFromProperty result="ZoneId" ini="Engine" section="/Script/AdColony.AdColonySettings" property="ZoneId" default=""/>
+    <setElement result="ZoneIdMetadata" value="meta-data"/>
+    <addAttribute tag="$ZoneIdMetadata" name="android:name" value="com.epicgames.ue4.AdColony.ZoneId"/>
+    <addAttribute tag="$ZoneIdMetadata" name="android:value" value="$S(ZoneId)"/>
+    <addElement tag="application" name="ZoneIdMetadata"/>
+
+  </androidManifestUpdates>
+
+	<!-- optional additions to proguard -->
+	<proguardAdditions>
+		<insert>
+      # If your project uses WebView with JS, uncomment the following
+      # and specify the fully qualified class name to the JavaScript interface
+      # class:
+      -keepclassmembers class fqcn.of.javascript.interface.for.webview {
+        public *;
+      }
+      -keepclassmembers class fqcn.of.javascript.interface.for.webviewclient {
+        public *;
+      }
+
+		</insert>
+	</proguardAdditions>
+	
+	<!-- optional files or directories to copy to Intermediate/Android/APK -->
+ 	<resourceCopies>		
+		<copyFile src="$S(PluginDir)/../../lib/Android/adcolony-3.0.4.jar" dst="$S(BuildDir)/libs/adcolony-3.0.4.jar" />
+		    <isArch arch="armeabi-v7a">
+			  <copyFile src="$S(PluginDir)/../../lib/Android//armeabi-v7a/libImmEndpointWarpJ.so" dst="$S(BuildDir)/libs/armeabi-v7a/libImmEndpointWarpJ.so" />
+        <copyFile src="$S(PluginDir)/../../lib/Android//armeabi-v7a/libadcolony.so" dst="$S(BuildDir)/libs/armeabi-v7a/libadcolony.so" />
+        <copyFile src="$S(PluginDir)/../../lib/Android//armeabi-v7a/libjs.so" dst="$S(BuildDir)/libs/armeabi-v7a/libjs.so" />
+		    </isArch>
+<!--		<isArch arch="armeabi-v7a">
+     <copyFile src="$S(PluginDir)/../../lib/Android//armeabi-v7a/libadcolony.so" dst="$S(BuildDir)/libs/armeabi-v7a/libadcolony.so" />
+      <copyFile src="$S(PluginDir)/../../lib/Android//armeabi-v7a/libjs.so" dst="$S(BuildDir)/libs/armeabi-v7a/libjs.so" />
+			<copyFile src="$S(EngineDir)/Source/ThirdParty/Oculus/LibOVRMobile/LibOVRMobile_062/VrApi/Libs/Android/armeabi-v7a/libvrapi.so"
+						dst="$S(BuildDir)/libs/armeabi-v7a/libvrapi.so" />
+		</isArch>
+		<copyFile src="$S(EngineDir)/Source/ThirdParty/Oculus/LibOVRMobile/LibOVRMobile_062/VrApi/Libs/Android/VrApi.jar"
+					dst="$S(BuildDir)/libs/VrApi.jar" />
+		<copyFile src="$S(EngineDir)/Source/ThirdParty/Oculus/LibOVRMobile/LibOVRMobile_062/1stParty/VrPlatform/libs/vrplatlib.jar"
+					dst="$S(BuildDir)/libs/vrplatlib.jar" />
+		<if condition="bRemoveOSIG">
+			<true>
+				<deleteFiles filespec="assets/oculussig_*" />
+			</true>
+		</if>-->
+	</resourceCopies>
+
+	<!-- optional additions to the GameActivity imports in GameActivity.java -->
+	<gameActivityImportAdditions>
+		<insert>
+			import com.adcolony.sdk.*;
+	</insert>
+	</gameActivityImportAdditions>
+	
+
+	<!-- optional additions to the GameActivity class in GameActivity.java -->
+	<gameActivityClassAdditions>
+		<insert>
+
+       /* Old SDK
+
+      private boolean bAdColonyAvailability = false;
+
+      // Called after a rewarded video has been viewed completely and user is eligible for reward.
+      public native void nativeAdColonyDidCompleteRewardedVideo(int reward);
+
+      // Called after a rewarded video availability ahs changed
+      public native void nativeDidAdColonyAdAvailabilityChange(final boolean availability);
+
+      private AdColonyV4VCListener AdColonyV4VClistener = new AdColonyV4VCListener()
+      {
+      public void onAdColonyV4VCReward(AdColonyV4VCReward reward)
+      {
+
+      //Just an example, see API Details page for more information.
+      if(reward.success())
+      {
+      //Reward was successful, reward your user here
+      int amount  = reward.amount();
+      String name = reward.name();
+      nativeAdColonyDidCompleteRewardedVideo(amount);
+
+
+      }
+      }
+      };
+
+      private AdColonyAdAvailabilityListener AdColonyAvailabilitylistener = new AdColonyAdAvailabilityListener()
+      {
+      public void onAdColonyAdAvailabilityChange( final boolean available, String zone_id )
+      {
+      if(available)
+      {
+      bAdColonyAvailability = available;
+      nativeDidAdColonyAdAvailabilityChange(available);
+      //Log.debug("AdColony AdAvailabilityChange");
+      }
+      else if(!available)
+      {
+      nativeDidAdColonyAdAvailabilityChange(available);
+      bAdColonyAvailability = available;
+      }
+
+      }
+      };
+
+      public void AndroidThunkJava_AdColony_ShowV4VCReward(String zoneId)
+      {
+      //Log.debug( "AndroidThunkJava_AdColony_ShowV4VCReward()" );
+      AdColonyV4VCAd ad = new AdColonyV4VCAd(zoneId);
+      ad.show();
+      //Log.debug("AdAvailabilityChange");
+      //bAdColonyAvailability =false;
+      }
+
+      public boolean AndroidThunkJava_AdColony_HasRewardedVideo(String ZoneId)
+      {
+      return bAdColonyAvailability;
+
+      }
+
+
+      */
+
+      //Aurora sdk
+      
+      final String zoneId = ""; //Replace with your ZoneID from AdColony Dashboard.
+
+      private AdColonyInterstitial rewardedVideoAd;
+      private AdColonyInterstitialListener listener;
+
+      // Called after a rewarded video has been viewed completely and user is eligible for reward.
+      public native void nativeAdColonyDidCompleteRewardedVideo(int reward);
+
+      // Called after a rewarded video availability has changed
+      public native void nativeDidAdColonyAdAvailabilityChange(boolean availability);
+
+      public void AndroidThunkJava_AdColony_ShowV4VCReward()
+      {
+      rewardedVideoAd.show();
+      //Log.debug( "AndroidThunkJava_AdColony_ShowV4VCReward()" );
+      }
+    </insert>
+	</gameActivityClassAdditions>
+	
+	<!-- optional additions to GameActivity onCreate metadata reading in GameActivity.java -->
+	<gameActivityReadMetadataAdditions>
+		<insert>
+      //if (bundle.containsKey("com.epicgames.ue4.AdColony.AppId") &amp;&amp; bundle.containsKey("com.epicgames.ue4.AdColony.ZoneId")) {
+      String appId = bundle.getString("com.epicgames.ue4.AdColony.AppId");
+      //String zoneId = bundle.getString("com.epicgames.ue4.AdColony.ZoneId");
+      
+      
+
+      //Log.debug("AdColony.configure(\"" + appId + "\", \"" + zoneId + "\")");
+
+
+
+      //Configure AdColony in your launching Activity's onCreate() method
+      //so that ads can be available as soon as possible.
+      //AdColony.configure( this, "version:1.0,store:google", "appId", "zoneId" );
+      AdColony.configure( this, appId, zoneId );
+
+      //Log.debug("AdColony.configure(\"" + appId + "\", \"" + zoneId + "\")");
+
+
+      /** Create and set a reward listener */
+      AdColony.setRewardListener( new AdColonyRewardListener()
+      {
+      @Override
+      public void onReward( AdColonyReward reward )
+      {
+      /** Query reward object for info here */
+      nativeAdColonyDidCompleteRewardedVideo(reward.getRewardAmount());
+      //Log.debug("AdColony.onReward" );
+      }
+      } );
+
+      /**
+      * Set up listener for interstitial ad callbacks. You only need to implement the callbacks
+      * that you care about. The only required callback is onRequestFilled, as this is the only
+      * way to get an ad object.
+      */
+      listener = new AdColonyInterstitialListener()
+      {
+      /** Ad passed back in request filled callback, ad can now be shown */
+      @Override
+      public void onRequestFilled( AdColonyInterstitial ad )
+      {
+      //RewardedInterstitialActivity.this.ad = ad;
+      rewardedVideoAd = ad;
+      nativeDidAdColonyAdAvailabilityChange(true);
+      //Log.debug( "AdColony.onRequestFilled" );
+
+      }
+
+      /** Ad request was not filled */
+      @Override
+      public void onRequestNotFilled( AdColonyZone zone )
+      {
+      //Log.debug( "AdColony.onRequestNotFilled");
+      }
+
+      /** Ad opened, reset UI to reflect state change */
+      @Override
+      public void onOpened( AdColonyInterstitial ad )
+      {
+      //Log.debug( "AdColony.onOpened" );
+      }
+
+      /** Request a new ad if ad is expiring */
+      @Override
+      public void onExpiring( AdColonyInterstitial ad )
+      {
+      AdColony.requestInterstitial( zoneId, this );
+      //Log.debug( "AdColony.onExpiring" );
+      }
+      };
+
+
+
+      //Register an AdColonyAdAvailabilityListener to be notified of changes in a zone's
+      //ad availability.
+      //AdColony.addAdAvailabilityListener( AdColonyAvailabilitylistener );
+
+      //Log.debug("addAdAvailabilityListener");
+
+      //Register an AdColonyV4VCListener to be notified of reward events
+      //AdColony.addV4VCListener( AdColonyV4VClistener );
+
+      //Log.debug("addV4VCListener");
+
+  
+
+
+      //} else {
+      //Log.debug("Missing AdColony App ID and/or Zone ID on \"Extra settings for &lt;application&gt;\" in your project's Android settings. Example:\n &lt;meta-data android:name=\"com.epicgames.ue4.AdColony.AppId\" android:value=\"Your App Id\" /&gt;\\n&lt;meta-data android:name=\"com.epicgames.ue4.AdColony.ZoneId\" android:value=\"Your Zone Id\" /&gt;");
+      //}
+    </insert>
+	</gameActivityReadMetadataAdditions>
+	
+	<!-- optional additions to GameActivity onCreate in GameActivity.java -->
+	<gameActivityOnCreateAdditions>
+    <insert>
+      
+
+    </insert>
+   
+
+  </gameActivityOnCreateAdditions>
+
+	<!-- optional additions to GameActivity onDestroy in GameActivity.java -->
+	<gameActivityOnDestroyAdditions>
+		<insert>
+		
+		</insert>
+	</gameActivityOnDestroyAdditions>
+	
+	
+	<!-- optional additions to GameActivity onStart in GameActivity.java -->
+	<gameActivityOnStartAdditions>
+		<insert>
+		
+		</insert>
+	</gameActivityOnStartAdditions>
+
+	<!-- optional additions to GameActivity onStop in GameActivity.java -->
+	<gameActivityOnStopAdditions>
+		<insert>
+		
+		</insert>
+	</gameActivityOnStopAdditions>
+	
+
+	<!-- optional additions to GameActivity onPause in GameActivity.java	-->
+	<gameActivityOnPauseAdditions>
+		<insert>
+		//AdColony.pause(); 
+		</insert>
+	</gameActivityOnPauseAdditions>
+
+
+	<!-- optional additions to GameActivity onResume in GameActivity.java	-->
+	<gameActivityOnResumeAdditions>
+		<insert>
+		//AdColony.resume( this ); 
+    
+    if (rewardedVideoAd == null ||rewardedVideoAd.isExpired())
+      {
+      AdColony.requestInterstitial( zoneId, listener );
+      }
+		</insert>
+	</gameActivityOnResumeAdditions>
+
+
+	<!-- optional additions to GameActivity onActivityResult in GameActivity.java -->
+	<gameActivityOnActivityResultAdditions>
+	</gameActivityOnActivityResultAdditions>
+	
+
+	<!-- optional libraries to load in GameActivity.java before libUE4.so -->
+	<soLoadLibrary>
+	<loadLibrary name="ImmEndpointWarpJ" failmsg="AdColony library not loaded and required!" />
+    <loadLibrary name="adcolony" failmsg="AdColony library not loaded and required!" />
+    <loadLibrary name="js" failmsg="AdColony library not loaded and required!" />
+		<!-- need this if plugin enabled and supported architecture, even if not packaged for GearVR -->
+	<!-- 	<if condition="bSupported">
+			<true>
+				<loadLibrary name="vrapi" failmsg="GearVR library not loaded and required!" />
+			</true>
+		</if> -->
+	</soLoadLibrary>
+</root>
