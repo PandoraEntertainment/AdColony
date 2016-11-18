@@ -154,7 +154,9 @@
 
       //Aurora sdk
       
-      final String zoneId = ""; //Replace with your ZoneID from AdColony Dashboard.
+      //final String zoneId = ""; //Replace with your ZoneID from AdColony Dashboard.
+	  
+	  private static String zoneId_g = "";
 
       private AdColonyInterstitial rewardedVideoAd;
       private AdColonyInterstitialListener listener;
@@ -178,7 +180,9 @@
 		<insert>
       //if (bundle.containsKey("com.epicgames.ue4.AdColony.AppId") &amp;&amp; bundle.containsKey("com.epicgames.ue4.AdColony.ZoneId")) {
       String appId = bundle.getString("com.epicgames.ue4.AdColony.AppId");
-      //String zoneId = bundle.getString("com.epicgames.ue4.AdColony.ZoneId");
+      final String zoneId = bundle.getString("com.epicgames.ue4.AdColony.ZoneId");
+      
+      this.zoneId_g = zoneId;
       
       
 
@@ -314,11 +318,11 @@
 	<gameActivityOnResumeAdditions>
 		<insert>
 		//AdColony.resume( this ); 
-    
-    if (rewardedVideoAd == null ||rewardedVideoAd.isExpired())
-      {
-      AdColony.requestInterstitial( zoneId, listener );
-      }
+		if (rewardedVideoAd == null ||rewardedVideoAd.isExpired())
+        {
+         AdColony.requestInterstitial( zoneId_g, listener );
+         //Log.debug("AdColony.OnResume" + zoneId_g);
+        }
 		</insert>
 	</gameActivityOnResumeAdditions>
 
